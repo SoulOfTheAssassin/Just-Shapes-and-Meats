@@ -25,22 +25,51 @@ class Level:
     moveNumber = {'Up': 1, 'Left': 2, 'Down': 3, 'Right': 4}
     actionDict = {pygame.K_w: 1, pygame.K_a: 2, pygame.K_s: 3, pygame.K_d: 4}
     statusDict = {1: 'Unlocked', 2: 'Locked', 3: 'Complete'}
-    dict = {
-        0: ['Tutorial', 1, [None, None, 1, None], 0],
-        1: ['Level 1', 2, [0, None, 5, 2], 0],
-        2: ['Level 2', 2, [None, 1, 6, 3], 0],
-        3: ['Level 3', 2, [None, 2, None, 4], 0],
-        4: ['4', 2, [None, 3, 8, None], 0],
-        5: ['5', 2, [1, None, None, 6], 0],
-        6: ['6', 2, [2, 5, 7, None], 0],
-        7: ['7', 2, [6, None, None, 9], 0],
-        8: ['8', 2, [4, 9, None, None], 0],
-        9: ['BOSSFIGHT', 2, [None, 7, None, 8], 0]
-    }
+    dict = {}
     selected = 0
 
+def Tutorial():
+    pass
+
 def Level1():
-    
+    pass
+
+def Level2():
+    pass
+
+def Level3():
+    pass
+
+def Level4():
+    pass
+
+def Level5():
+    pass
+
+def Level6():
+    pass
+
+def Level7():
+    pass
+
+def Level8():
+    pass
+
+def Bossfight():
+    pass
+
+Level.dict = {
+        0: ['Tutorial', 1, [None, None, 1, None], 0, Tutorial],
+        1: ['Level 1', 2, [0, None, 5, 2], 0, Level1],
+        2: ['Level 2', 2, [None, 1, 6, 3], 0, Level2],
+        3: ['Level 3', 2, [None, 2, None, 4], 0, Level3],
+        4: ['4', 2, [None, 3, 8, None], 0, Level4],
+        5: ['5', 2, [1, None, None, 6], 0, Level5],
+        6: ['6', 2, [2, 5, 7, None], 0, Level6],
+        7: ['7', 2, [6, None, None, 9], 0, Level7],
+        8: ['8', 2, [4, 9, None, None], 0, Level8],
+        9: ['BOSSFIGHT', 2, [None, 7, None, 8], 0, Bossfight]
+    }
 # Functions for UI and Level Selection
 def Rectangle(x: float, y: float, width: float, height: float):
     rectX = x - width // 2
