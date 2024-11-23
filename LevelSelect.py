@@ -1,7 +1,5 @@
 import pygame
 import sys
-import random
-# from Menu import *
 
 sys.dont_write_bytecode = True
 
@@ -10,7 +8,6 @@ map = pygame.image.load('LevelMapV2.png')
 
 # pygame setup
 pygame.init()
-# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption('Just Shapes and Meats - Oliver and Sean (Nelson was here)')
 pygame.display.set_icon(icon)
@@ -88,6 +85,7 @@ Level.dict = {
         8: ['8', 2, [4, 9, None, None], 0, Level8],
         9: ['BOSSFIGHT', 2, [None, 7, None, 8], 0, Bossfight]
     }
+
 # Functions for UI and Level Selection
 def Rectangle(x: float, y: float, width: float, height: float):
     rectX = x - width // 2
@@ -119,15 +117,7 @@ def SelectLevel(currentLevel: int, action: int) -> None:
     Level.selected = selectedLevel
 
 
-# Function to create the "Enter Level" zoom and fade effect, and return when finished
 def EnterLevelEffect(screen, fadeSpeed=5):
-    """Fades the screen to black.
-
-    Args:
-        screen: The Pygame display surface.
-        fadeSpeed: The speed of the fade effect (higher values fade faster).
-    """
-
     fadeSurface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     alpha = 0
 
@@ -140,32 +130,55 @@ def EnterLevelEffect(screen, fadeSpeed=5):
     return False
 
 
+def MovePlayer(start_pos, end_pos, duration=300):
+    start_time = pygame.time.get_ticks()
+    while True:
+        elapsed = pygame.time.get_ticks() - start_time
+        if elapsed > duration:
+            break
+        t = elapsed / duration
+        current_x = start_pos[0] + (end_pos[0] - start_pos[0]) * t
+        current_y = start_pos[1] + (end_pos[1] - start_pos[1]) * t
+        yield (current_x, current_y)
+    yield end_pos
+
+
 # Main game loop
 while playing:
     while menuRunning:
-        keys = pygame.key.get_pressed()  # Get all key states
+        keys = pygame.key.get_pressed()
         screen.blit(map, (0, 0))
-        player = pygame.Rect(Level.mapDict[Level.selected], PLAYER_SIZE)
-        
+        player_pos = Level.mapDict[Level.selected]
+        player = pygame.Rect(player_pos, PLAYER_SIZE)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 menuRunning = False
             
-            # Check for keydown events and select the level
             if event.type == pygame.KEYDOWN:
+                new_level = Level.selected
                 if event.key == pygame.K_w:
-                    SelectLevel(Level.selected, Level.actionDict[pygame.K_w])
+                    new_level = Level.dict[Level.selected][2][Level.actionDict[pygame.K_w] - 1]
                 elif event.key == pygame.K_a:
-                    SelectLevel(Level.selected, Level.actionDict[pygame.K_a])
+                    new_level = Level.dict[Level.selected][2][Level.actionDict[pygame.K_a] - 1]
                 elif event.key == pygame.K_s:
-                    SelectLevel(Level.selected, Level.actionDict[pygame.K_s])
+                    new_level = Level.dict[Level.selected][2][Level.actionDict[pygame.K_s] - 1]
                 elif event.key == pygame.K_d:
-                    SelectLevel(Level.selected, Level.actionDict[pygame.K_d])
-                elif event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
-                    menuRunning = EnterLevelEffect(screen)  # Exit menu after the effect is done
+                    new_level = Level.dict[Level.selected][2][Level.actionDict[pygame.K_d] - 1]
+
+                if new_level is not None and new_level != Level.selected:
+                    transition = MovePlayer(Level.mapDict[Level.selected], Level.mapDict[new_level])
+                    for pos in transition:
+                        screen.blit(map, (0, 0))
+                        pygame.draw.rect(screen, 'cyan', pygame.Rect(pos, PLAYER_SIZE))
+                        pygame.display.flip()
+                        clock.tick(60)
+                    Level.selected = new_level
+                elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
+                    menuRunning = EnterLevelEffect(screen)
                     gameRunning = True
-        
-        if menuRunning:  # Only draw the level display if the menu is still running
+
+        if menuRunning:
             DrawLevelDisplay(Level.selected)
             pygame.draw.rect(screen, 'cyan', player)
         
