@@ -1,15 +1,19 @@
 import pygame
 import sys
 import random
-from Cross import screen
 # from Menu import *
 
 sys.dont_write_bytecode = True
 
+icon = pygame.image.load('JustShapesAndMeats.png')
+map = pygame.image.load('LevelMapV2.png')
+
 # pygame setup
 pygame.init()
+# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen = pygame.display.set_mode((800, 800))
-pygame.display.set_caption('Just Shapes and Meats - Oliver and Nelson')
+pygame.display.set_caption('Just Shapes and Meats - Oliver and Sean (Nelson was here)')
+pygame.display.set_icon(icon)
 clock = pygame.time.Clock()
 menuRunning = True
 dt = 0
@@ -19,6 +23,7 @@ dashMaxCooldown = 100
 facing = {'x': 0, 'y': 0}
 enemyColour = (225, 0, 130)
 playing = True
+PLAYER_SIZE = (20, 20)
 
 # Level Data
 class Level:
@@ -26,6 +31,18 @@ class Level:
     actionDict = {pygame.K_w: 1, pygame.K_a: 2, pygame.K_s: 3, pygame.K_d: 4}
     statusDict = {1: 'Unlocked', 2: 'Locked', 3: 'Complete'}
     dict = {}
+    mapDict = {
+        0: (55, 45),
+        1: (55, 184),
+        2: (203, 184),
+        3: (351, 184),
+        4: (499, 184),
+        5: (55, 324),
+        6: (203, 324),
+        7: (203, 464),
+        8: (499, 464),
+        9: (351, 464)
+    }
     selected = 0
 
 def Tutorial():
@@ -59,6 +76,7 @@ def Bossfight():
     pass
 
 Level.dict = {
+    #   Level Number: [Name, Locked/Unlocked, Adjacent Levels, Attempts, Function]
         0: ['Tutorial', 1, [None, None, 1, None], 0, Tutorial],
         1: ['Level 1', 2, [0, None, 5, 2], 0, Level1],
         2: ['Level 2', 2, [None, 1, 6, 3], 0, Level2],
@@ -78,18 +96,18 @@ def Rectangle(x: float, y: float, width: float, height: float):
 
 
 def DrawLevelDisplay(levelNumber: int):
-    fill = Rectangle(screen.get_width() // 2, (screen.get_height() // 2) + 100, 345, 145)
+    fill = Rectangle(screen.get_width() // 2, (screen.get_height() // 2) + 300, 345, 100)
     pygame.draw.rect(screen, 'black', fill)
-    button = Rectangle(screen.get_width() // 2, (screen.get_height() // 2) + 100, 350, 150)
+    button = Rectangle(screen.get_width() // 2, (screen.get_height() // 2) + 300, 350, 105)
     pygame.draw.rect(screen, 'cyan', button, 8)
     title = pygame.font.Font('Fonts\\Title.otf', 18)
     text_surface = title.render(Level.dict[levelNumber][0], True, 'white')
-    text_rect = text_surface.get_rect(center=(screen.get_width() // 2, (screen.get_height() // 2) + 45))
+    text_rect = text_surface.get_rect(center=(screen.get_width() // 2, (screen.get_height() // 2) + 300))
     screen.blit(text_surface, text_rect)
 
 
 def UnlockLevel(currentLevel: int):
-    for i in Level.dict[currentLevel][2]:
+    for i in Level.dict[currentLevel][3]:
         if i is not None:
             Level.dict[i][1] = 1
 
@@ -102,52 +120,32 @@ def SelectLevel(currentLevel: int, action: int) -> None:
 
 
 # Function to create the "Enter Level" zoom and fade effect, and return when finished
-def EnterLevelEffect():
-    zoomFactor = 1.0 
-    fadeAlpha = 0 
-    zoomSpeed = 0.05
-    fadeSpeed = 2  # Slower fade speed to make it more gradual
+def EnterLevelEffect(screen, fadeSpeed=5):
+    """Fades the screen to black.
 
-    surface = pygame.Surface((800, 800))
+    Args:
+        screen: The Pygame display surface.
+        fadeSpeed: The speed of the fade effect (higher values fade faster).
+    """
 
-    while zoomFactor < 1.5 or fadeAlpha < 255:
-        # Apply zoom effect
-        zoomedSurface = pygame.transform.scale(surface, 
-                                                (int(800 * zoomFactor), int(800 * zoomFactor)))
-        zoomedRect = zoomedSurface.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+    fadeSurface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+    alpha = 0
 
-        # Apply fade effect
-        fadeSurface = pygame.Surface((800, 800))
-        fadeSurface.fill((0, 0, 0))  # Black fade color
-        fadeSurface.set_alpha(fadeAlpha)
-
-        # Draw the zoomed and faded surfaces
-        screen.blit(zoomedSurface, zoomedRect)
+    while alpha < 255:
+        fadeSurface.fill((0, 0, 0, alpha))
         screen.blit(fadeSurface, (0, 0))
-
-        # Update zoom and fade values gradually
-        zoomFactor += zoomSpeed
-        fadeAlpha += fadeSpeed  # Increase fadeAlpha gradually
-
-        # Clamp the values to make sure they don't exceed limits
-        if fadeAlpha > 255:
-            fadeAlpha = 255
-        
-        if zoomFactor > 1.5:
-            zoomFactor = 1.5
-
         pygame.display.flip()
-        pygame.time.delay(10)  # Delay to allow visual effect to be noticeable
-
-    # After effect finishes, continue with the game or transition to the next stage
-    return
+        alpha += fadeSpeed
+        pygame.time.delay(10)
+    return False
 
 
 # Main game loop
 while playing:
     while menuRunning:
         keys = pygame.key.get_pressed()  # Get all key states
-        screen.fill('white')
+        screen.blit(map, (0, 0))
+        player = pygame.Rect(Level.mapDict[Level.selected], PLAYER_SIZE)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -164,12 +162,19 @@ while playing:
                 elif event.key == pygame.K_d:
                     SelectLevel(Level.selected, Level.actionDict[pygame.K_d])
                 elif event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
-                    EnterLevelEffect()
-                    menuRunning = False  # Exit menu after the effect is done
+                    menuRunning = EnterLevelEffect(screen)  # Exit menu after the effect is done
+                    gameRunning = True
         
         if menuRunning:  # Only draw the level display if the menu is still running
             DrawLevelDisplay(Level.selected)
+            pygame.draw.rect(screen, 'cyan', player)
         
         pygame.display.flip()
 
+    while gameRunning:
+        screen.fill('cyan')
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                gameRunning = False
+        pygame.display.flip()
 pygame.quit()

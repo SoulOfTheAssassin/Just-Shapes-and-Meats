@@ -1,4 +1,6 @@
 import pygame
+import sys
+sys.dont_write_bytecode = True
 pygame.init()
 class Font:
     title = pygame.font.Font('Fonts\\Title.otf', 60)
@@ -6,4 +8,3 @@ class Font:
     name = pygame.font.Font('Fonts\\Subtitle.ttf', 20)
 
 screen = pygame.display.set_mode((1280, 720))
-
