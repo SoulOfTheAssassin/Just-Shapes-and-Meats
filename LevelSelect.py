@@ -1,5 +1,6 @@
 import pygame
 import sys
+from Cross import screen
 
 sys.dont_write_bytecode = True
 
@@ -8,7 +9,7 @@ map = pygame.image.load('LevelMapV2.png')
 
 # pygame setup
 pygame.init()
-screen = pygame.display.set_mode((800, 800))
+# screen = pygame.display.set_mode((800, 800))
 pygame.display.set_caption('Just Shapes and Meats - Oliver and Sean (Nelson was here)')
 pygame.display.set_icon(icon)
 clock = pygame.time.Clock()
@@ -20,6 +21,7 @@ dashMaxCooldown = 100
 facing = {'x': 0, 'y': 0}
 enemyColour = (225, 0, 130)
 playing = True
+_ = 0
 PLAYER_SIZE = (20, 20)
 
 # Level Data
@@ -111,13 +113,28 @@ def UnlockLevel(currentLevel: int):
 
 
 def SelectLevel(currentLevel: int, action: int) -> None:
+    """
+    Figures our the selected level based on player input
+    Directly edits the global variable, so it returns None
+
+    Args:
+        currentLevel (int): The current selected level
+        action (int): The number of action in the actionDict
+    """
     selectedLevel = Level.dict[currentLevel][2][action - 1]
     if selectedLevel is None:
         selectedLevel = currentLevel
     Level.selected = selectedLevel
 
 
-def EnterLevelEffect(screen, fadeSpeed=5):
+def FadeEffect(screen, fadeSpeed=5):
+    """
+    Fades the screen from fully visible to black
+
+    Args:
+        screen: Pygame display surface
+        fadeSpeed(int, optional): Speed of fade effect (higher means faster). Defaults to 5.
+    """
     fadeSurface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
     alpha = 0
 
@@ -128,6 +145,30 @@ def EnterLevelEffect(screen, fadeSpeed=5):
         alpha += fadeSpeed
         pygame.time.delay(10)
     return False
+
+
+def ReverseFadeEffect(screen, fadeSpeed=5):
+    """
+    Fades the screen in from black to fully visible.
+
+    Args:
+        screen: The Pygame display surface.
+        fadeSpeed: The speed of the fade effect (higher values fade faster). Defaults to 5.
+    """
+    fadeSurface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)  # Transparent surface
+    alpha = 255  # Start fully opaque (black)
+
+    while alpha > 0:
+        screen.fill((0, 0, 0))  # Clear screen to prevent visual artifacts
+        fadeSurface.fill((0, 0, 0, alpha))  # Fill surface with decreasing alpha
+        screen.blit(fadeSurface, (0, 0))  # Overlay the fade surface
+        pygame.display.flip()  # Update the display
+        alpha -= fadeSpeed  # Decrease the alpha
+        pygame.time.delay(10)  # Delay to control transition speed
+
+    # Ensure final screen state
+    screen.fill((0, 0, 0))  # Final draw of the game screen after fade
+    pygame.display.flip()
 
 
 def MovePlayer(start_pos, end_pos, duration=300):
@@ -153,7 +194,7 @@ while playing:
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                menuRunning = False
+                pygame.quit()
             
             if event.type == pygame.KEYDOWN:
                 new_level = Level.selected
@@ -167,7 +208,7 @@ while playing:
                     new_level = Level.dict[Level.selected][2][Level.actionDict[pygame.K_d] - 1]
 
                 if new_level is not None and new_level != Level.selected:
-                    transition = MovePlayer(Level.mapDict[Level.selected], Level.mapDict[new_level])
+                    transition = MovePlayer(Level.mapDict[Level.selected], Level.mapDict[new_level], 100)
                     for pos in transition:
                         screen.blit(map, (0, 0))
                         pygame.draw.rect(screen, 'cyan', pygame.Rect(pos, PLAYER_SIZE))
@@ -175,7 +216,7 @@ while playing:
                         clock.tick(60)
                     Level.selected = new_level
                 elif event.key in (pygame.K_SPACE, pygame.K_RETURN):
-                    menuRunning = EnterLevelEffect(screen)
+                    menuRunning = FadeEffect(screen)
                     gameRunning = True
 
         if menuRunning:
@@ -183,11 +224,18 @@ while playing:
             pygame.draw.rect(screen, 'cyan', player)
         
         pygame.display.flip()
+    screen.fill('black')
+    ReverseFadeEffect(screen)
 
-    while gameRunning:
-        screen.fill('cyan')
+    while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 gameRunning = False
+                _ = 1
+        with open('main.py') as file:
+            code = file.read()
+            exec(code)
+        if _ == 1:
+            break
         pygame.display.flip()
 pygame.quit()
